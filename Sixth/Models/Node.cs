@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Drawing;
 
 namespace Sixth.Models
 {
@@ -18,5 +19,7 @@ namespace Sixth.Models
         public int ZIndex { get; set; }
 
         public string Text { get; set; }
+
+        public string Color { get; set; }
     }
 }

@@ -93,26 +93,31 @@
           }
       })
     };
+
     const bindNodeEvents = id => {
-      $(`#${id} [name="btnColor"]`).click(e => {
-        e.preventDefault();
-          e.stopPropagation();
-        let color = $(e.target).css('background-color');
-        $(e.target).parents('.node').children('.node-input-area').css('background-color', color)
-      });
-      $(`#${id} [name="btnClose"]`).click(e => {
-        e.preventDefault();
-          e.stopPropagation();
-          hubRemoveNode(Number(id));
-      });
-      $(`#${id}`).click(e => {
-          e.stopPropagation();
-          let id = $(e.target).attr('id');
-          let props = getNodeProps(id);
-          hubUpdateNode(props);
-        $(e.currentTarget).css('z-index', ++maxZindex);
-      });
-    }
+        $(`#${id} [name="btnColor"]`).click(e => {
+            e.preventDefault();
+            e.stopPropagation();
+            let color = $(e.target).css('background-color');
+            $(e.target).parents('.node').children('.node-input-area').css('background-color', color)
+            let id = $(e.target).parents('.node').attr('id');
+            let props = getNodeProps(id);
+            hubUpdateNode(props);
+        });
+        $(`#${id} [name="btnClose"]`).click(e => {
+            e.preventDefault();
+            e.stopPropagation();
+            hubRemoveNode(Number(id));
+        });
+        $(`#${id}`).click(e => {
+            e.stopPropagation();
+            let id = $(e.target).attr('id');
+            let props = getNodeProps(id);
+            hubUpdateNode(props);
+            $(e.currentTarget).css('z-index', ++maxZindex);
+        });
+    };
+
     const getNodeProps = id => {
         let elem = $(`#${id}`);
         let pos = elem.position();
@@ -123,7 +128,8 @@
             height: elem.outerHeight(),
             width: elem.outerWidth(),
             zIndex: Number(elem.css('z-index')),
-            text: elem.find('textarea').val()
+            text: elem.find('textarea').val(),
+            color: elem.find('.node-input-area').css('background-color')
         }
         return props;
     };
@@ -131,6 +137,7 @@
     const setNodeProps = (id, props) => {
         let node = $(`#${id}`);
         node.find('textarea').val(props.text);
+        node.find('.node-input-area').css('background-color', props.color)
         node.css('z-index', props.zIndex)
         node.css({ top: props.top, left: props.left, height: props.height, width: props.width });
     }
@@ -155,7 +162,7 @@
         left: e.pageX - nodeMinWidth / 2,
         height: nodeMinHeight,
         width: nodeMinWidth,
-        zIndex: ++maxZindex
+          zIndex: ++maxZindex
       };
       return props;
     };
