@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Sixth.Interfaces;
 using Sixth.Services;
 using System;
 using System.Collections.Generic;
@@ -22,16 +23,15 @@ namespace Sixth
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             string conString = Configuration.GetConnectionString("Default");
             services.AddControllersWithViews();
             services.AddSignalR();
             services.AddDbContext<AppDbContext>(o => o.UseSqlServer(conString));
+            services.AddScoped<INodeCrudService, NodeCrudService>();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -41,7 +41,6 @@ namespace Sixth
             else
             {
                 app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
             app.UseHttpsRedirection();

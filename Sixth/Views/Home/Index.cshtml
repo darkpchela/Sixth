@@ -23,20 +23,7 @@
 <script src="~/jqueryui/jquery-ui.min.js"></script>
 <script src="~/microsoft-signalr/signalr.min.js"></script>
 <script>
-    const hubConnection = new signalR.HubConnectionBuilder()
-        .withUrl("/Main")
-        .build();
-    //hubConnection.invoke("Send", message);
-    //hubconnection.on("send", function (data) {
 
-    //    let elem = document.createelement("p");
-    //    elem.appendchild(document.createtextnode(data));
-    //    let firstelem = document.getelementbyid("chatroom").firstchild;
-    //    document.getelementbyid("chatroom").insertbefore(elem, firstelem);
-
-    //});
-
-    hubConnection.start();
 </script>
 <script>
     let id = 0;
@@ -124,11 +111,39 @@
       };
       return props;
     };
-    $('#workplace').click(e => {
-        alert('clicked');
-      let props = getDefaultProps(e);
-      id++;
-      createNode(id, props);
+</script>
+<script>
+    const hubConnection = new signalR.HubConnectionBuilder()
+        .withUrl("/Main")
+        .build();
+
+    hubConnection.on("OnConnected", nodes => {
+        for (let i = 0; i < nodes.length; i++) {
+            createNode(nodes[i].id, nodes[i])
+        }
     });
+
+    hubConnection.on("OnNodeCreated", (id, props) => {
+        createNode(id, props);
+    });
+
+    $('#workplace').click(e => {
+        let props = getDefaultProps(e);
+        hubConnection.invoke("CreateNode", props);
+        //id++;
+        //createNode(id, props);
+    });
+
+    //hubConnection.invoke("Send", message);
+    //hubconnection.on("send", function (data) {
+
+    //    let elem = document.createelement("p");
+    //    elem.appendchild(document.createtextnode(data));
+    //    let firstelem = document.getelementbyid("chatroom").firstchild;
+    //    document.getelementbyid("chatroom").insertbefore(elem, firstelem);
+
+    //});
+
+    hubConnection.start();
 </script>
 }
