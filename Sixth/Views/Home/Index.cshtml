@@ -40,11 +40,7 @@
     };
 
     hubConnection.on("OnConnected", nodes => {
-        for (let i = 0; i < nodes.length; i++) {
-            createNode(nodes[i].id, nodes[i])
-            if (maxZindex < node[i].zIndex)
-                maxZindex = node[i].zIndex;
-        }
+        createNodeRange(nodes);
     });
 
     hubConnection.on("OnNodeCreated", (id, props) => {
@@ -64,7 +60,6 @@
     hubConnection.start();
 </script>
 <script>
-    let id = 0;
     let maxZindex = 1;
     const nodeMinWidth = 150;
     const nodeMinHeight = 100;
@@ -111,10 +106,10 @@
         });
         $(`#${id}`).click(e => {
             e.stopPropagation();
-            let id = $(e.target).attr('id');
+            $(e.currentTarget).css('z-index', ++maxZindex);
+            let id = $(e.target).parents('.node').attr('id');
             let props = getNodeProps(id);
             hubUpdateNode(props);
-            $(e.currentTarget).css('z-index', ++maxZindex);
         });
     };
 
@@ -146,7 +141,7 @@
         $(`#${id}`).remove();
     };
 
-    const createNode = (id, props) => { //ck
+    const createNode = (id, props) => {
       let node = nodeProto.clone();
       node.attr('id', id);
       $("#workplace").prepend(node);
@@ -156,13 +151,22 @@
       bindNodeEvents(id);
     }
 
+    const createNodeRange = nodes => {
+        for (let i = 0; i < nodes.length; i++) {
+            createNode(nodes[i].id, nodes[i])
+            if (maxZindex < nodes[i].zIndex)
+                maxZindex = nodes[i].zIndex;
+        }
+    };
+
     const getDefaultProps = (e) => {
       let props = {
         top: e.pageY - nodeMinHeight / 2,
         left: e.pageX - nodeMinWidth / 2,
         height: nodeMinHeight,
         width: nodeMinWidth,
-          zIndex: ++maxZindex
+          zIndex: ++maxZindex,
+          color: $('#nodeProto .node-input-area').css('background-color')
       };
       return props;
     };
@@ -173,16 +177,6 @@
         let props = getDefaultProps(e);
         hubCreateNode(props);
     });
-
-    //hubConnection.invoke("Send", message);
-    //hubconnection.on("send", function (data) {
-
-    //    let elem = document.createelement("p");
-    //    elem.appendchild(document.createtextnode(data));
-    //    let firstelem = document.getelementbyid("chatroom").firstchild;
-    //    document.getelementbyid("chatroom").insertbefore(elem, firstelem);
-
-    //});
 
 </script>
 }

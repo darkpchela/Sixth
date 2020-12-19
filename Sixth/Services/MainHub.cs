@@ -1,9 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Sixth.Interfaces;
 using Sixth.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Sixth.Services
