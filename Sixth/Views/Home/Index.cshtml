@@ -1,0 +1,134 @@
+﻿<div id="workplace" class="h-100 w-100">
+    <div hidden>
+        <div id="nodeProto" class="node border-black-25 rounded-top-3px position-fixed" style="background-color:ghostwhite">
+            <div class="node-header rounded-top">
+                <div class="float-left h-100 d-flex flex-row align-items-center">
+                    <a name="btnColor" class="btn-custom btn-hidden rounded bg-blue d-block"></a>
+                    <a name="btnColor" class="btn-custom btn-hidden rounded bg-pink d-block"></a>
+                    <a name="btnColor" class="btn-custom btn-hidden rounded bg-yellow d-block"></a>
+                </div>
+                <div class="position-absolute position-top-right btn-hidden rounded">
+                    <a name="btnClose" class="btn-custom btn-hidden">&#10006</a>
+                </div>
+            </div>
+            <div class="node-input-area bg-blue text-center">
+                <textarea class="node-input-text"></textarea>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{ 
+
+<script src="~/jqueryui/jquery-ui.min.js"></script>
+<script src="~/microsoft-signalr/signalr.min.js"></script>
+<script>
+    const hubConnection = new signalR.HubConnectionBuilder()
+        .withUrl("/Main")
+        .build();
+    //hubConnection.invoke("Send", message);
+    //hubconnection.on("send", function (data) {
+
+    //    let elem = document.createelement("p");
+    //    elem.appendchild(document.createtextnode(data));
+    //    let firstelem = document.getelementbyid("chatroom").firstchild;
+    //    document.getelementbyid("chatroom").insertbefore(elem, firstelem);
+
+    //});
+
+    hubConnection.start();
+</script>
+<script>
+    let id = 0;
+    let maxZindex = 1;
+    const nodeMinWidth = 150;
+    const nodeMinHeight = 100;
+    const nodeProto = $('#nodeProto');
+    const makeDraggable = id => {
+      $(`#${id}`).draggable({
+        handle: ".node-header",
+        containment: "#workplace",
+        drag: e => {
+          console.log($(e.target).attr('id'))
+          console.log($(e.target).position())
+        }
+      })
+    };
+    const makeResizable = id => {
+      $(`#${id}`).resizable({
+        alsoResize: `#${id} .node-input-text`,
+        containment: "#workplace",
+        minWidth: nodeMinWidth,
+        minHeight: nodeMinHeight,
+        resize: (e) => {
+          console.log($(e.target).attr('id'))
+          console.log($(e.target).outerWidth())
+          console.log($(e.target).outerHeight())
+        }
+      })
+    };
+    const bindNodeEvents = id => {
+      $(`#${id} [name="btnColor"]`).click(e => {
+        e.preventDefault();
+        e.stopPropagation();
+        let color = $(e.target).css('background-color');
+        $(e.target).parents('.node').children('.node-input-area').css('background-color', color)
+      });
+      $(`#${id} [name="btnClose"]`).click(e => {
+        e.preventDefault();
+        e.stopPropagation();
+        $(`#${id}`).remove();
+      });
+      $(`#${id}`).click(e => {
+        e.stopPropagation();
+        $(e.currentTarget).css('z-index', ++maxZindex);
+      });
+    }
+    const getNodeProps = id => {
+      let elem = $(`#${id}`);
+      let pos = elem.position();
+      let props = {
+        top: pos.top,
+        left: pos.left,
+        height: elem.outerHeight(),
+        width: elem.outerWidth(),
+        zIndex: elem.css('z-index')
+      }
+      return props;
+    }
+
+    const setNodeProps = (id, props) => {
+      let node = $(`#${id}`);
+      console.log(props)
+      node.css('z-index', props.zIndex)
+      node.css({ top: props.top, left: props.left, height: props.height, width: props.width });
+    }
+
+    const createNode = (id, props) => { //ck
+      let node = nodeProto.clone();
+      node.attr('id', id);
+      $("#workplace").prepend(node);
+      setNodeProps(id, props);
+      makeDraggable(id)
+      makeResizable(id)
+      bindNodeEvents(id);
+    }
+
+    const getDefaultProps = (e) => {
+      let props = {
+        top: e.pageY - nodeMinHeight / 2,
+        left: e.pageX - nodeMinWidth / 2,
+        height: nodeMinHeight,
+        width: nodeMinWidth,
+        zIndex: ++maxZindex
+      };
+      return props;
+    };
+    $('#workplace').click(e => {
+        alert('clicked');
+      let props = getDefaultProps(e);
+      id++;
+      createNode(id, props);
+    });
+</script>
+}
