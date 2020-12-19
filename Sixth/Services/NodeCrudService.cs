@@ -39,5 +39,15 @@ namespace Sixth.Services
             dbContext.Nodes.Update(node);
             await dbContext.SaveChangesAsync();
         }
+
+        public async Task Delete(int id)
+        {
+            var node = await dbContext.Nodes.FindAsync(id);
+            if(node!= null)
+            {
+                dbContext.Nodes.Remove(node);
+                await dbContext.SaveChangesAsync();
+            }
+        }
     }
 }

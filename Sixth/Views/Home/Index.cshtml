@@ -23,7 +23,45 @@
 <script src="~/jqueryui/jquery-ui.min.js"></script>
 <script src="~/microsoft-signalr/signalr.min.js"></script>
 <script>
+    const hubConnection = new signalR.HubConnectionBuilder()
+        .withUrl("/Main")
+        .build();
 
+    const hubUpdateNode = props => {
+        hubConnection.invoke("UpdateNode", props);
+    };
+
+    const hubCreateNode = props => {
+        hubConnection.invoke("CreateNode", props);
+    };
+
+    const hubRemoveNode = id => {
+        hubConnection.invoke("RemoveNode", id);
+    };
+
+    hubConnection.on("OnConnected", nodes => {
+        for (let i = 0; i < nodes.length; i++) {
+            createNode(nodes[i].id, nodes[i])
+            if (maxZindex < node[i].zIndex)
+                maxZindex = node[i].zIndex;
+        }
+    });
+
+    hubConnection.on("OnNodeCreated", (id, props) => {
+        createNode(id, props);
+    });
+
+    hubConnection.on("OnNodeUpdated", (id, props) => {
+        setNodeProps(id, props);
+        if (props.zIndex > maxZindex)
+            maxZindex = props.zIndex
+    });
+
+    hubConnection.on("OnNodeRemoved", id => {
+        removeNode(id);
+    });
+
+    hubConnection.start();
 </script>
 <script>
     let id = 0;
@@ -32,64 +70,74 @@
     const nodeMinHeight = 100;
     const nodeProto = $('#nodeProto');
     const makeDraggable = id => {
-      $(`#${id}`).draggable({
-        handle: ".node-header",
-        containment: "#workplace",
-        drag: e => {
-          console.log($(e.target).attr('id'))
-          console.log($(e.target).position())
-        }
-      })
+        $(`#${id}`).draggable({
+            handle: ".node-header",
+            containment: "#workplace",
+            stop: e => {
+                let id = $(e.target).attr('id');
+                let props = getNodeProps(id);
+                hubUpdateNode(props);
+            }
+        })
     };
     const makeResizable = id => {
       $(`#${id}`).resizable({
         alsoResize: `#${id} .node-input-text`,
         containment: "#workplace",
         minWidth: nodeMinWidth,
-        minHeight: nodeMinHeight,
-        resize: (e) => {
-          console.log($(e.target).attr('id'))
-          console.log($(e.target).outerWidth())
-          console.log($(e.target).outerHeight())
-        }
+          minHeight: nodeMinHeight,
+          stop: e => {
+              let id = $(e.target).attr('id');
+              let props = getNodeProps(id);
+              hubUpdateNode(props);
+          }
       })
     };
     const bindNodeEvents = id => {
       $(`#${id} [name="btnColor"]`).click(e => {
         e.preventDefault();
-        e.stopPropagation();
+          e.stopPropagation();
         let color = $(e.target).css('background-color');
         $(e.target).parents('.node').children('.node-input-area').css('background-color', color)
       });
       $(`#${id} [name="btnClose"]`).click(e => {
         e.preventDefault();
-        e.stopPropagation();
-        $(`#${id}`).remove();
+          e.stopPropagation();
+          hubRemoveNode(Number(id));
       });
       $(`#${id}`).click(e => {
-        e.stopPropagation();
+          e.stopPropagation();
+          let id = $(e.target).attr('id');
+          let props = getNodeProps(id);
+          hubUpdateNode(props);
         $(e.currentTarget).css('z-index', ++maxZindex);
       });
     }
     const getNodeProps = id => {
-      let elem = $(`#${id}`);
-      let pos = elem.position();
-      let props = {
-        top: pos.top,
-        left: pos.left,
-        height: elem.outerHeight(),
-        width: elem.outerWidth(),
-        zIndex: elem.css('z-index')
-      }
-      return props;
-    }
+        let elem = $(`#${id}`);
+        let pos = elem.position();
+        let props = {
+            id: Number(id),
+            top: pos.top,
+            left: pos.left,
+            height: elem.outerHeight(),
+            width: elem.outerWidth(),
+            zIndex: Number(elem.css('z-index')),
+            text: elem.find('textarea').val()
+        }
+        return props;
+    };
 
     const setNodeProps = (id, props) => {
-      let node = $(`#${id}`);
-      console.log(props)
-      node.css('z-index', props.zIndex)
-      node.css({ top: props.top, left: props.left, height: props.height, width: props.width });
+        let node = $(`#${id}`);
+        node.find('textarea').val(props.text);
+        node.css('z-index', props.zIndex)
+        node.css({ top: props.top, left: props.left, height: props.height, width: props.width });
     }
+
+    const removeNode = id => {
+        $(`#${id}`).remove();
+    };
 
     const createNode = (id, props) => { //ck
       let node = nodeProto.clone();
@@ -113,25 +161,10 @@
     };
 </script>
 <script>
-    const hubConnection = new signalR.HubConnectionBuilder()
-        .withUrl("/Main")
-        .build();
-
-    hubConnection.on("OnConnected", nodes => {
-        for (let i = 0; i < nodes.length; i++) {
-            createNode(nodes[i].id, nodes[i])
-        }
-    });
-
-    hubConnection.on("OnNodeCreated", (id, props) => {
-        createNode(id, props);
-    });
 
     $('#workplace').click(e => {
         let props = getDefaultProps(e);
-        hubConnection.invoke("CreateNode", props);
-        //id++;
-        //createNode(id, props);
+        hubCreateNode(props);
     });
 
     //hubConnection.invoke("Send", message);
@@ -144,6 +177,5 @@
 
     //});
 
-    hubConnection.start();
 </script>
 }

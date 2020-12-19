@@ -28,5 +28,17 @@ namespace Sixth.Services
             var id = await nodeCrudService.Create(node);
             await Clients.All.SendAsync("OnNodeCreated", id, node);
         }
+
+        public async Task UpdateNode(Node node)
+        {
+            await nodeCrudService.Update(node);
+            await Clients.All.SendAsync("OnNodeUpdated", node.Id, node);
+        }
+
+        public async Task RemoveNode(int id)
+        {
+            await nodeCrudService.Delete(id);
+            await Clients.All.SendAsync("OnNodeRemoved", id);
+        }
     }
 }

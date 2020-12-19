@@ -13,5 +13,7 @@ namespace Sixth.Interfaces
         Task<IEnumerable<Node>> GetAll();
 
         Task Update(Node node);
+
+        Task Delete(int id);
     }
 }
