@@ -17,6 +17,14 @@ html, body{
     height: 80%
 }
 
+.h-85{
+    height: 85%;
+}
+
+.h-90{
+    height: 90%;
+}
+
 .position-absolute{
     position: absolute;
 }
