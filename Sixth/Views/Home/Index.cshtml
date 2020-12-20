@@ -31,6 +31,7 @@
             .build();
 
         const hubUpdateNode = props => {
+            console.log(props);
             hubConnection.invoke("UpdateNode", props);
         };
 
@@ -157,8 +158,8 @@
             let pos = elem.position();
             let props = {
                 id: Number(id),
-                top: pos.top,
-                left: pos.left,
+                top: Math.round(pos.top),
+                left: Math.round(pos.left),
                 height: elem.outerHeight(),
                 width: elem.outerWidth(),
                 zIndex: Number(elem.css('z-index')),
