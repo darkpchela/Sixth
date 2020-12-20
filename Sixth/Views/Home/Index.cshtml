@@ -216,10 +216,11 @@
         };
     </script>
     <script>
-
-        $('#workplace').click(e => {
-            let props = getDefaultProps(e);
-            hubCreateNode(props);
+        $('#workplace').dblclick(e => {
+            if ($(e.target).is('#workplace')) {
+                let props = getDefaultProps(e);
+                hubCreateNode(props);
+            }
         });
 
     </script>
