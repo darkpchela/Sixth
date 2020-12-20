@@ -119,8 +119,7 @@ html, body{
 }
 
 .node-input-area{
-    height: 100%;
-    width: 100%;
+    flex-grow: 3;
 }
 .node-input-text{
     min-height: 92%;
@@ -131,6 +130,16 @@ html, body{
     background-color: inherit;
     border: none;
 }
+
+.node-input-view {
+    margin: 0 auto;
+    text-align: center;
+    min-height: 90%;
+    max-height: 90%;
+    min-width: 90%;
+    max-width: 90%;
+}
+
 .node-input-text:focus{
     border: none;
     outline-style: none;

@@ -11,8 +11,8 @@
                     <a name="btnClose" class="btn-custom btn-hidden">&#10006</a>
                 </div>
             </div>
-            <div class="node-input-area bg-blue text-center">
-                <div name="view" class="w-100 h-100 overflow-auto"></div>
+            <div class="node-input-area bg-blue text-center p-1 overflow-auto">
+                <div name="view" class="node-input-view p-1"></div>
                 <textarea name="editor" class="node-input-text" hidden></textarea>
             </div>
         </div>
@@ -64,8 +64,8 @@
     </script>
     <script>
         let maxZindex = 1;
-        const nodeMinWidth = 150;
-        const nodeMinHeight = 100;
+        const nodeMinWidth = 170;
+        const nodeMinHeight = 180;
         const nodeProto = $('#nodeProto');
         const makeDraggable = id => {
             $(`#${id}`).draggable({
