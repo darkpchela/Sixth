@@ -96,7 +96,6 @@
             let view = $(`#${id} [name=view]`);
             editor.markdownEditor();
             view.click(e => {
-                e.stopPropagation();
                 let id = $(e.target).parents('.node').attr('id');
                 switchViewEditor(id);
             });
@@ -145,7 +144,8 @@
             });
             $(`#${id}`).click(e => {
                 e.stopPropagation();
-                $(e.currentTarget).css('z-index', ++maxZindex);
+                if ($(e.currentTarget).css('z-index') < maxZindex)
+                    $(e.currentTarget).css('z-index', ++maxZindex);
                 let id = $(e.target).parents('.node').attr('id');
                 let props = getNodeProps(id);
                 hubUpdateNode(props);
