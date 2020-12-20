@@ -204,8 +204,8 @@
 
         const getDefaultProps = (e) => {
             let props = {
-                top: e.pageY - nodeMinHeight / 2,
-                left: e.pageX - nodeMinWidth / 2,
+                top: e.offsetY - nodeMinHeight / 2,
+                left: e.offsetX - nodeMinWidth / 2,
                 height: nodeMinHeight,
                 width: nodeMinWidth,
                 zIndex: ++maxZindex,
