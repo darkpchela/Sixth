@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Sixth.Interfaces;
 using Sixth.Services;
+using Microsoft.Azure.SignalR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,7 +28,7 @@ namespace Sixth
         {
             string conString = Configuration.GetConnectionString("Default");
             services.AddControllersWithViews();
-            services.AddSignalR();
+            services.AddSignalR().AddAzureSignalR();
             services.AddDbContext<AppDbContext>(o => o.UseSqlServer(conString));
             services.AddScoped<INodeCrudService, NodeCrudService>();
         }
@@ -55,7 +56,11 @@ namespace Sixth
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
-                endpoints.MapHub<MainHub>("/Main");
+            });
+
+            app.UseAzureSignalR(routes =>
+            {
+                routes.MapHub<MainHub>("/Main");
             });
         }
     }
