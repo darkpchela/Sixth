@@ -12,171 +12,214 @@
                 </div>
             </div>
             <div class="node-input-area bg-blue text-center">
-                <textarea class="node-input-text"></textarea>
+                <div name="view" class="w-100 h-100 overflow-auto"></div>
+                <textarea name="editor" class="node-input-text" hidden></textarea>
             </div>
         </div>
     </div>
 </div>
 
-@section Scripts{ 
+@section Scripts{
 
-<script src="~/jqueryui/jquery-ui.min.js"></script>
-<script src="~/microsoft-signalr/signalr.min.js"></script>
-<script>
-    const hubConnection = new signalR.HubConnectionBuilder()
-        .withUrl("/Main")
-        .build();
+    <script src="~/jqueryui/jquery-ui.min.js"></script>
+    <script src="~/microsoft-signalr/signalr.min.js"></script>
+    <script src="~/textarea-markdown/jquery.textarea-markdown-editor.js"></script>
+    <script src="~/textarea-markdown/marked.min.js"></script>
+    <script>
+        const hubConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/Main")
+            .build();
 
-    const hubUpdateNode = props => {
-        hubConnection.invoke("UpdateNode", props);
-    };
+        const hubUpdateNode = props => {
+            hubConnection.invoke("UpdateNode", props);
+        };
 
-    const hubCreateNode = props => {
-        hubConnection.invoke("CreateNode", props);
-    };
+        const hubCreateNode = props => {
+            hubConnection.invoke("CreateNode", props);
+        };
 
-    const hubRemoveNode = id => {
-        hubConnection.invoke("RemoveNode", id);
-    };
+        const hubRemoveNode = id => {
+            hubConnection.invoke("RemoveNode", id);
+        };
 
-    hubConnection.on("OnConnected", nodes => {
-        createNodeRange(nodes);
-    });
+        hubConnection.on("OnConnected", nodes => {
+            createNodeRange(nodes);
+        });
 
-    hubConnection.on("OnNodeCreated", (id, props) => {
-        createNode(id, props);
-    });
+        hubConnection.on("OnNodeCreated", (id, props) => {
+            createNode(id, props);
+        });
 
-    hubConnection.on("OnNodeUpdated", (id, props) => {
-        setNodeProps(id, props);
-        if (props.zIndex > maxZindex)
-            maxZindex = props.zIndex
-    });
+        hubConnection.on("OnNodeUpdated", (id, props) => {
+            setNodeProps(id, props);
+            if (props.zIndex > maxZindex)
+                maxZindex = props.zIndex
+        });
 
-    hubConnection.on("OnNodeRemoved", id => {
-        removeNode(id);
-    });
+        hubConnection.on("OnNodeRemoved", id => {
+            removeNode(id);
+        });
 
-    hubConnection.start();
-</script>
-<script>
-    let maxZindex = 1;
-    const nodeMinWidth = 150;
-    const nodeMinHeight = 100;
-    const nodeProto = $('#nodeProto');
-    const makeDraggable = id => {
-        $(`#${id}`).draggable({
-            handle: ".node-header",
-            containment: "#workplace",
-            stop: e => {
-                let id = $(e.target).attr('id');
+        hubConnection.start();
+    </script>
+    <script>
+        let maxZindex = 1;
+        const nodeMinWidth = 150;
+        const nodeMinHeight = 100;
+        const nodeProto = $('#nodeProto');
+        const makeDraggable = id => {
+            $(`#${id}`).draggable({
+                handle: ".node-header",
+                containment: "#workplace",
+                stop: e => {
+                    let id = $(e.target).attr('id');
+                    let props = getNodeProps(id);
+                    hubUpdateNode(props);
+                }
+            })
+        };
+        const makeResizable = id => {
+            $(`#${id}`).resizable({
+                alsoResize: `#${id} .node-input-text`,
+                containment: "#workplace",
+                minWidth: nodeMinWidth,
+                minHeight: nodeMinHeight,
+                stop: e => {
+                    let id = $(e.target).attr('id');
+                    let props = getNodeProps(id);
+                    hubUpdateNode(props);
+                }
+            })
+        };
+        const makeMarkDown = id => {
+            let editor = $(`#${id} .node-input-text[name=editor]`);
+            let view = $(`#${id} [name=view]`);
+            editor.markdownEditor();
+            view.click(e => {
+                e.stopPropagation();
+                let id = $(e.target).parents('.node').attr('id');
+                switchViewEditor(id);
+            });
+            editor.blur(e => {
+                let id = $(e.target).parents('.node').attr('id');
+                switchViewEditor(id);
+            });
+            editor.change(e => {
+                let id = $(e.target).parents('.node').attr('id');
+                let editor = $(`#${id} [name=editor]`);
+                let view = $(`#${id} [name=view]`);
+                view.html(marked(editor.val()));
+                let props = getNodeProps(id);
+                hubUpdateNode(props)
+            })
+        };
+
+        const switchViewEditor = id => {
+            let editor = $(`#${id} [name=editor]`);
+            let view = $(`#${id} [name=view]`);
+            if (editor.is(':hidden')) {
+                view.attr('hidden', 'hidden');
+                editor.removeAttr('hidden');
+                editor.focus();
+            }
+            else {
+                editor.attr('hidden', 'hidden');
+                view.removeAttr('hidden');
+            }
+        };
+
+        const bindNodeEvents = id => {
+            $(`#${id} [name="btnColor"]`).click(e => {
+                e.preventDefault();
+                e.stopPropagation();
+                let color = $(e.target).css('background-color');
+                $(e.target).parents('.node').children('.node-input-area').css('background-color', color)
+                let id = $(e.target).parents('.node').attr('id');
                 let props = getNodeProps(id);
                 hubUpdateNode(props);
+            });
+            $(`#${id} [name="btnClose"]`).click(e => {
+                e.preventDefault();
+                e.stopPropagation();
+                hubRemoveNode(Number(id));
+            });
+            $(`#${id}`).click(e => {
+                e.stopPropagation();
+                $(e.currentTarget).css('z-index', ++maxZindex);
+                let id = $(e.target).parents('.node').attr('id');
+                let props = getNodeProps(id);
+                hubUpdateNode(props);
+            });
+        };
+
+        const getNodeProps = id => {
+            let elem = $(`#${id}`);
+            let pos = elem.position();
+            let props = {
+                id: Number(id),
+                top: pos.top,
+                left: pos.left,
+                height: elem.outerHeight(),
+                width: elem.outerWidth(),
+                zIndex: Number(elem.css('z-index')),
+                text: elem.find('textarea').val(),
+                color: elem.find('.node-input-area').css('background-color')
             }
-        })
-    };
-    const makeResizable = id => {
-      $(`#${id}`).resizable({
-        alsoResize: `#${id} .node-input-text`,
-        containment: "#workplace",
-        minWidth: nodeMinWidth,
-          minHeight: nodeMinHeight,
-          stop: e => {
-              let id = $(e.target).attr('id');
-              let props = getNodeProps(id);
-              hubUpdateNode(props);
-          }
-      })
-    };
+            return props;
+        };
 
-    const bindNodeEvents = id => {
-        $(`#${id} [name="btnColor"]`).click(e => {
-            e.preventDefault();
-            e.stopPropagation();
-            let color = $(e.target).css('background-color');
-            $(e.target).parents('.node').children('.node-input-area').css('background-color', color)
-            let id = $(e.target).parents('.node').attr('id');
-            let props = getNodeProps(id);
-            hubUpdateNode(props);
-        });
-        $(`#${id} [name="btnClose"]`).click(e => {
-            e.preventDefault();
-            e.stopPropagation();
-            hubRemoveNode(Number(id));
-        });
-        $(`#${id}`).click(e => {
-            e.stopPropagation();
-            $(e.currentTarget).css('z-index', ++maxZindex);
-            let id = $(e.target).parents('.node').attr('id');
-            let props = getNodeProps(id);
-            hubUpdateNode(props);
-        });
-    };
-
-    const getNodeProps = id => {
-        let elem = $(`#${id}`);
-        let pos = elem.position();
-        let props = {
-            id: Number(id),
-            top: pos.top,
-            left: pos.left,
-            height: elem.outerHeight(),
-            width: elem.outerWidth(),
-            zIndex: Number(elem.css('z-index')),
-            text: elem.find('textarea').val(),
-            color: elem.find('.node-input-area').css('background-color')
+        const setNodeProps = (id, props) => {
+            let node = $(`#${id}`);
+            let editor = node.find('[name=editor]');
+            let view = node.find('[name=view]')
+            editor.val(props.text);
+            view.html(marked(editor.val()));
+            node.find('.node-input-area').css('background-color', props.color)
+            node.css('z-index', props.zIndex)
+            node.css({ top: props.top, left: props.left, height: props.height, width: props.width });
         }
-        return props;
-    };
 
-    const setNodeProps = (id, props) => {
-        let node = $(`#${id}`);
-        node.find('textarea').val(props.text);
-        node.find('.node-input-area').css('background-color', props.color)
-        node.css('z-index', props.zIndex)
-        node.css({ top: props.top, left: props.left, height: props.height, width: props.width });
-    }
+        const removeNode = id => {
+            $(`#${id}`).remove();
+        };
 
-    const removeNode = id => {
-        $(`#${id}`).remove();
-    };
-
-    const createNode = (id, props) => {
-      let node = nodeProto.clone();
-      node.attr('id', id);
-      $("#workplace").prepend(node);
-      setNodeProps(id, props);
-      makeDraggable(id)
-      makeResizable(id)
-      bindNodeEvents(id);
-    }
-
-    const createNodeRange = nodes => {
-        for (let i = 0; i < nodes.length; i++) {
-            createNode(nodes[i].id, nodes[i])
-            if (maxZindex < nodes[i].zIndex)
-                maxZindex = nodes[i].zIndex;
+        const createNode = (id, props) => {
+            let node = nodeProto.clone();
+            node.attr('id', id);
+            $("#workplace").prepend(node);
+            setNodeProps(id, props);
+            makeDraggable(id)
+            makeResizable(id)
+            makeMarkDown(id);
+            bindNodeEvents(id);
         }
-    };
 
-    const getDefaultProps = (e) => {
-      let props = {
-        top: e.pageY - nodeMinHeight / 2,
-        left: e.pageX - nodeMinWidth / 2,
-        height: nodeMinHeight,
-        width: nodeMinWidth,
-          zIndex: ++maxZindex,
-          color: $('#nodeProto .node-input-area').css('background-color')
-      };
-      return props;
-    };
-</script>
-<script>
+        const createNodeRange = nodes => {
+            for (let i = 0; i < nodes.length; i++) {
+                createNode(nodes[i].id, nodes[i])
+                if (maxZindex < nodes[i].zIndex)
+                    maxZindex = nodes[i].zIndex;
+            }
+        };
 
-    $('#workplace').click(e => {
-        let props = getDefaultProps(e);
-        hubCreateNode(props);
-    });
+        const getDefaultProps = (e) => {
+            let props = {
+                top: e.pageY - nodeMinHeight / 2,
+                left: e.pageX - nodeMinWidth / 2,
+                height: nodeMinHeight,
+                width: nodeMinWidth,
+                zIndex: ++maxZindex,
+                color: $('#nodeProto .node-input-area').css('background-color')
+            };
+            return props;
+        };
+    </script>
+    <script>
 
-</script>
+        $('#workplace').click(e => {
+            let props = getDefaultProps(e);
+            hubCreateNode(props);
+        });
+
+    </script>
 }
